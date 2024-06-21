@@ -1,14 +1,15 @@
-import NavBar from "@/components/NavBar";
+"use client";
+import NavBar from "@/components/HomeNavBar";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { SignInButton } from "@clerk/nextjs";
 
 export default function Home() {
     return (
         <div className="relative h-screen w-screen flex flex-col">
             <NavBar />
-            <div className="flex-grow flex flex-col items-center justify-center gap-10">
-                <div className="flex flex-col text-center gap-4">
-                    <h1 className="font-bold text-6xl">
+            <div className="flex-grow flex flex-col items-center justify-center gap-16">
+                <div className="flex flex-col text-center gap-5">
+                    <h1 className="font-black text-6xl">
                         Transform PDFs with DocuWise AI
                     </h1>
                     <h3 className="font-medium text-2xl opacity-65">
@@ -16,9 +17,11 @@ export default function Home() {
                     </h3>
                 </div>
 
-                <Button className="bg-[#7E01FF] hover:bg-[#7E01FF]/85 text-lg p-6">
-                    Get Started For Free
-                </Button>
+                <SignInButton>
+                    <Button className="bg-[#7E01FF] hover:bg-[#7E01FF]/80 text-lg p-7 rounded-full">
+                        Get Started For Free
+                    </Button>
+                </SignInButton>
             </div>
         </div>
     );

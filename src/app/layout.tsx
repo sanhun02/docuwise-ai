@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
@@ -5,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const poppins = Poppins({
     subsets: ["latin"],
-    weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
+    weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
     variable: "--font-sans",
 });
 
@@ -21,15 +22,17 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" suppressHydrationWarning>
-            <body
-                className={cn(
-                    "min-h-screen bg-background font-sans antialiased",
-                    poppins.variable
-                )}
-            >
-                {children}
-            </body>
-        </html>
+        <ClerkProvider>
+            <html lang="en" suppressHydrationWarning>
+                <body
+                    className={cn(
+                        "min-h-screen bg-background font-sans antialiased",
+                        poppins.variable
+                    )}
+                >
+                    {children}
+                </body>
+            </html>
+        </ClerkProvider>
     );
 }
