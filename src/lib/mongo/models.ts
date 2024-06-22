@@ -3,16 +3,14 @@ import mongoose, { Schema, Document } from "mongoose";
 // PDF Model
 interface IPDF extends Document {
     title: string;
-    filePath: string;
-    fileType: string;
+    fileId: mongoose.Types.ObjectId;
     uploadDate: Date;
     userId: string;
 }
 
 const PDFSchema: Schema = new Schema({
     title: { type: String, required: true },
-    filePath: { type: String, required: true },
-    fileType: { type: String, required: true },
+    fileId: { type: mongoose.Types.ObjectId, required: true },
     uploadDate: { type: Date, default: Date.now },
     userId: { type: String, required: true },
 });
@@ -111,11 +109,19 @@ const QuizSchema: Schema = new Schema({
 
 const Quiz = mongoose.model<IQuiz>("Quiz", QuizSchema);
 
-export {
-    PDF,
-    FlashcardSet,
-    Flashcard,
-    Highlight,
-    QuizSet,
-    Quiz,
-};
+// Note Model
+interface INote extends Document {
+    pdfId: Schema.Types.ObjectId;
+    content: string;
+    createdAt: Date;
+}
+
+const NoteSchema: Schema = new Schema({
+    pdfId: { type: Schema.Types.ObjectId, ref: "PDF", required: true },
+    content: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+});
+
+const Note = mongoose.model<INote>("Note", NoteSchema);
+
+export { PDF, FlashcardSet, Flashcard, Highlight, QuizSet, Quiz, Note};
