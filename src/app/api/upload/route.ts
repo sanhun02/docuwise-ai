@@ -18,6 +18,15 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+        const existingPDF = await PDF.findOne({ userId, filename: file.name });
+        
+        if (existingPDF) {
+            return NextResponse.json(
+                { message: "File already uploaded" },
+                { status: 409 }
+            );
+        }
+
         const contentBuffer = Buffer.from(await file.arrayBuffer());
 
         const newPDF = new PDF({
