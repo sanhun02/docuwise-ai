@@ -1,38 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDB } from "@/lib/mongo";
-import { PDF } from "@/lib/mongo/models";
 import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
-import { createRetrievalChain } from "langchain/chains/retrieval";
-import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { MongoDBAtlasVectorSearch } from "@langchain/mongodb";
 import { MongoClient } from "mongodb";
+import { Message, StreamingTextResponse, LangChainAdapter } from "ai";
+import { AIMessage, HumanMessage } from "@langchain/core/messages";
+
+export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
     await connectToDB();
 
-    const formData = await req.formData();
-    const filename = formData.get("filename") as string;
-    const userId = formData.get("userId") as string;
-    const question = formData.get("question") as string;
-
-    if (!userId || !filename || !question) {
-        return NextResponse.json(
-            { message: "Missing userId, filename, or question" },
-            { status: 400 }
-        );
-    }
+    const { messages }: { messages: Message[] } = await req.json();
 
     try {
-        const pdf = await PDF.findOne({ userId, filename });
-
-        if (!pdf) {
-            return NextResponse.json(
-                { message: "File not found" },
-                { status: 404 }
-            );
-        }
-
         const client = new MongoClient(process.env.MONGODB_URI || "");
         const namespace = "test.vectors";
         const [dbName, collectionName] = namespace.split(".");
@@ -50,7 +31,18 @@ export async function POST(req: NextRequest) {
 
         const retriever = vectorStore.asRetriever();
 
-        const model = new ChatOpenAI({ model: "gpt-3.5-turbo" });
+        const model = new ChatOpenAI({
+            model: "gpt-3.5-turbo",
+            temperature: 0,
+        });
+
+        const relevantDocs = await retriever._getRelevantDocuments(
+            messages.at(-1)?.content!
+        );
+
+        const context = relevantDocs
+            .map((doc) => doc.pageContent)
+            .join("\n-----\n");
 
         const systemTemplate = [
             `You are an assistant for answering questions about project management methodologies `,
@@ -59,35 +51,29 @@ export async function POST(req: NextRequest) {
             `don't know. Use as many sentences you need, but keep the `,
             `answer concise.`,
             `\n\n`,
-            `{context}`,
+            `Context:\n`,
+            `${context}`,
         ].join("");
 
-        const prompt = ChatPromptTemplate.fromMessages([
-            ["system", systemTemplate],
-            ["human", "{input}"],
-        ]);
+        const userMessagesWithContext = [
+            new AIMessage(systemTemplate),
+            ...messages.map((message) =>
+                message.role == "user"
+                    ? new HumanMessage(message.content)
+                    : new AIMessage(message.content)
+            ),
+        ];
 
-        const questionAnswerChain = await createStuffDocumentsChain({
-            llm: model,
-            prompt,
-        });
+        const stream = await model.stream(userMessagesWithContext);
 
-        const ragChain = await createRetrievalChain({
-            retriever,
-            combineDocsChain: questionAnswerChain,
-        });
-
-        const results = await ragChain.invoke({ input: question });
+        const aiStream = LangChainAdapter.toAIStream(stream);
 
         await client.close();
 
-        return NextResponse.json({
-            answer: results.answer,
-            context: results.context,
-        });
+        return new StreamingTextResponse(aiStream);
     } catch (error) {
         console.error("Error processing question:", error);
-        
+
         return NextResponse.json(
             { message: "Unable to process question", error },
             { status: 500 }

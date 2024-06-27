@@ -1,60 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import { useChat } from "ai/react";
 
 interface Props {
     userId: string;
     filename: string;
 }
 function QuestionBar({ userId, filename }: Props) {
-    const [question, setQuestion] = useState("");
-    const [answer, setAnswer] = useState("");
-
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        const formData = new FormData();
-        formData.append("filename", filename);
-        formData.append("userId", userId || "");
-        formData.append("question", question);
-
-        try {
-            const response = await fetch("/api/ask", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                console.error("Failed to get answer");
-                return;
-            }
-
-            const data = await response.json();
-            console.log("Upload complete", data);
-            setAnswer(data.answer);
-        } catch (error) {
-            console.error("Error during question submission", error);
-        }
-    };
+    const { messages, input, handleInputChange, handleSubmit } = useChat();
 
     return (
-        <div className="w-1/2 text-wrap">
+        <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+            {messages.length > 0
+                ? messages.map((m) => (
+                      <div key={m.id} className="whitespace-pre-wrap">
+                          {m.role === "user" ? "User: " : "AI: "}
+                          {m.content}
+                      </div>
+                  ))
+                : null}
+
             <form onSubmit={handleSubmit}>
                 <input
-                    type="text"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    placeholder="Ask a question about the PDF"
-                    required
+                    className="fixed bottom-0 w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
+                    value={input}
+                    placeholder="Say something..."
+                    onChange={handleInputChange}
                 />
-                <button type="submit">Submit</button>
             </form>
-            {answer && (
-                <div>
-                    <h3>Answer:</h3>
-                    <p>{answer}</p>
-                </div>
-            )}
         </div>
     );
 }
