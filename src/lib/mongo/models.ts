@@ -1,7 +1,63 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+var PDF: Model<
+    IPDF,
+    {},
+    {},
+    {},
+    Document<unknown, {}, IPDF> & IPDF & Required<{ _id: unknown }>,
+    any
+>;
+
+var FlashcardSet: Model<
+    IFlashcardSet,
+    {},
+    {},
+    {},
+    Document<unknown, {}, IFlashcardSet> &
+        IFlashcardSet &
+        Required<{ _id: unknown }>,
+    any
+>;
+
+var Flashcard: Model<
+    IFlashcard,
+    {},
+    {},
+    {},
+    Document<unknown, {}, IFlashcard> & IFlashcard & Required<{ _id: unknown }>,
+    any
+>;
+
+var QuizSet: Model<
+    IQuizSet,
+    {},
+    {},
+    {},
+    Document<unknown, {}, IQuizSet> & IQuizSet & Required<{ _id: unknown }>,
+    any
+>;
+
+var Quiz: Model<
+    IQuiz,
+    {},
+    {},
+    {},
+    Document<unknown, {}, IQuiz> & IQuiz & Required<{ _id: unknown }>,
+    any
+>;
+
+var Note: Model<
+    INote,
+    {},
+    {},
+    {},
+    Document<unknown, {}, INote> & INote & Required<{ _id: unknown }>,
+    any
+>;
+
 // PDF Model
-interface IPDF extends Document {
+export interface IPDF extends Document {
     userId: string;
     filename: string;
     content: Buffer;
@@ -17,8 +73,11 @@ const PDFSchema = new Schema<IPDF>({
     uploadDate: { type: Date, default: Date.now },
 });
 
-const PDF: Model<IPDF> =
-    mongoose.models.PDF || mongoose.model<IPDF>("PDF", PDFSchema);
+if (mongoose.models.PDF) {
+    PDF = mongoose.model<IPDF>("PDF");
+} else {
+    PDF = mongoose.model<IPDF>("PDF", PDFSchema);
+}
 
 // Flashcard Model
 interface IFlashcardSet extends Document {
@@ -35,9 +94,11 @@ const FlashcardSetSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now },
 });
 
-const FlashcardSet: Model<IFlashcardSet> =
-    mongoose.models.FlashcardSet ||
-    mongoose.model<IFlashcardSet>("FlashcardSet", FlashcardSetSchema);
+if (mongoose.models.FlashcardSet) {
+    FlashcardSet = mongoose.model<IFlashcardSet>("FlashcardSet");
+} else {
+    FlashcardSet = mongoose.model<IFlashcardSet>("FlashcardSet", FlashcardSetSchema);
+}
 
 interface IFlashcard extends Document {
     flashcardSetId: Schema.Types.ObjectId;
@@ -57,28 +118,11 @@ const FlashcardSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now },
 });
 
-const Flashcard: Model<IFlashcard> =
-    mongoose.models.Flashcard ||
-    mongoose.model<IFlashcard>("Flashcard", FlashcardSchema);
-
-// Highlight Model
-interface IHighlight extends Document {
-    pdfId: Schema.Types.ObjectId;
-    page: number;
-    content: string;
-    createdAt: Date;
+if (mongoose.models.Flashcard) {
+    Flashcard = mongoose.model<IFlashcard>("Flashcard");
+} else {
+    Flashcard = mongoose.model<IFlashcard>("Flashcard", FlashcardSchema);
 }
-
-const HighlightSchema: Schema = new Schema({
-    pdfId: { type: Schema.Types.ObjectId, ref: "PDF", required: true },
-    page: { type: Number, required: true },
-    content: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-});
-
-const Highlight: Model<IHighlight> =
-    mongoose.models.Highlight ||
-    mongoose.model<IHighlight>("Highlight", HighlightSchema);
 
 // Quiz Model
 interface IQuizSet extends Document {
@@ -95,9 +139,11 @@ const QuizSetSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now },
 });
 
-const QuizSet: Model<IQuizSet> =
-    mongoose.models.QuizSet ||
-    mongoose.model<IQuizSet>("QuizSet", QuizSetSchema);
+if (mongoose.models.QuizSet) {
+    QuizSet = mongoose.model<IQuizSet>("QuizSet");
+} else {
+    QuizSet = mongoose.model<IQuizSet>("QuizSet", QuizSetSchema);
+}
 
 interface IQuiz extends Document {
     quizSetId: Schema.Types.ObjectId;
@@ -115,8 +161,11 @@ const QuizSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now },
 });
 
-const Quiz: Model<IQuiz> =
-    mongoose.models.Quiz || mongoose.model<IQuiz>("Quiz", QuizSchema);
+if (mongoose.models.Quiz) {
+    Quiz = mongoose.model<IQuiz>("Quiz");
+} else {
+    Quiz = mongoose.model<IQuiz>("Quiz", QuizSchema);
+}
 
 // Note Model
 interface INote extends Document {
@@ -131,7 +180,10 @@ const NoteSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now },
 });
 
-const Note: Model<INote> =
-    mongoose.models.Note || mongoose.model<INote>("Note", NoteSchema);
+if (mongoose.models.Note) {
+    Note = mongoose.model<INote>("Note");
+} else {
+    Note = mongoose.model<INote>("Note", NoteSchema);
+}
 
-export { PDF, FlashcardSet, Flashcard, Highlight, QuizSet, Quiz, Note };
+export { PDF, FlashcardSet, Flashcard, QuizSet, Quiz, Note };

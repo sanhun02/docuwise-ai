@@ -2,35 +2,62 @@
 
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import TabTitle from "./TabTitle";
-import TabCards from "./TabCards";
-import { Button } from "./ui/button";
-import PdfUploadAndViewer from "./PDFViewer";
 import PDFViewer from "./PDFViewer";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import QuestionBar from "./QuestionBar";
+import mongoose from "mongoose";
+import { IPDF } from "@/lib/mongo/models";
+import TabCards from "./TabCards";
 
 type Props = {
     userId: string | null;
 };
 
-const fileNames = [
-    "doc1",
-    "doc2",
-    "doc3",
-    "doc4",
-    "doc5",
-    "doc6",
-    "doc7",
-    "doc8",
-    "doc9",
-    "doc10",
-];
-
 const FileTab = ({ userId }: Props) => {
-    const [filename, setFilename] = useState("");
+    const [filename, setFilename] = useState<string>("");
+    const [files, setFiles] = useState<
+        (mongoose.Document<unknown, {}, IPDF> &
+            IPDF &
+            Required<{ _id: unknown }>)[]
+    >([]);
+    const [activeTab, setActiveTab] = useState<string>("");
+
+    const getFileNames = async () => {
+        try {
+            const response = await fetch(`/api/pdfs?id=${userId}`, {
+                method: "GET",
+            });
+
+            if (!response.ok) {
+                console.error("Failed to get fileNames");
+                return;
+            }
+
+            const data = await response.json();
+
+            setFiles(data.files);
+
+            if (!activeTab && data.files.length > 0) {
+                setActiveTab(data.files[0].filename);
+            }
+        } catch (error) {
+            console.error("Error getting fileNames", error);
+        }
+    };
 
     const handleUploadSuccess = (uploadedFilename: string) => {
         setFilename(uploadedFilename);
+        getFileNames();
+        setActiveTab(uploadedFilename);
     };
+
+    const onTabChange = (value: string) => {
+        setActiveTab(value);
+    };
+
+    useEffect(() => {
+        getFileNames();
+    }, [userId]);
 
     return (
         <div className="w-full h-full p-0">
@@ -38,7 +65,12 @@ const FileTab = ({ userId }: Props) => {
                 value="files"
                 className="flex flex-col justify-start h-full p-0"
             >
-                <Tabs defaultValue="doc10" className="flex h-full p-0">
+                <Tabs
+                    defaultValue={files[0]?.filename}
+                    value={activeTab}
+                    onValueChange={onTabChange}
+                    className="flex h-full p-0"
+                >
                     <div className="w-[17rem] p-4 flex flex-col gap-8 h-full border-r">
                         <TabTitle
                             title="Files"
@@ -46,14 +78,30 @@ const FileTab = ({ userId }: Props) => {
                             userId={userId}
                             onUploadSuccess={handleUploadSuccess}
                         />
-                        <TabCards tabList={fileNames} />
+                        <TabCards tabList={files} />
                     </div>
-                    <TabsContent value="doc10" className="w-full">
-                        <PDFViewer
-                            userId={userId ? userId : ""}
-                            filename={filename}
-                        />
-                    </TabsContent>
+
+                    {files &&
+                        files.map((file) => (
+                            <TabsContent
+                                key={file.filename}
+                                value={file.filename}
+                                className={`w-full flex ${
+                                    activeTab === file.filename
+                                        ? "data-[state=active]:flex"
+                                        : "data-[state=inactive]:hidden"
+                                }`}
+                            >
+                                <PDFViewer
+                                    userId={userId ? userId : ""}
+                                    filename={file.filename}
+                                />
+                                <QuestionBar
+                                    userId={userId ? userId : ""}
+                                    filename={file.filename}
+                                />
+                            </TabsContent>
+                        ))}
                 </Tabs>
             </TabsContent>
         </div>
