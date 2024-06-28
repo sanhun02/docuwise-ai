@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
     if (!userId || !filename) {
         return NextResponse.json(
-            { message: "Missing userId or filename" },
+            { message: "Error retrieving userId or filename" },
             { status: 400 }
         );
     }

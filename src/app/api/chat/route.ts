@@ -11,14 +11,22 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
     await connectToDB();
 
-    const { messages }: { messages: Message[] } = await req.json();
+    const { messages, filename }: { messages: Message[]; filename: string } =
+        await req.json();
+
+    if (!messages || !filename) {
+        return NextResponse.json(
+            { message: "Error retrieving messages or filename" },
+            { status: 400 }
+        );
+    }
+
+    const client = new MongoClient(process.env.MONGODB_URI || "");
+    const namespace = "test.vectors";
+    const [dbName, collectionName] = namespace.split(".");
+    const collection = client.db(dbName).collection(collectionName);
 
     try {
-        const client = new MongoClient(process.env.MONGODB_URI || "");
-        const namespace = "test.vectors";
-        const [dbName, collectionName] = namespace.split(".");
-        const collection = client.db(dbName).collection(collectionName);
-
         const vectorStore = new MongoDBAtlasVectorSearch(
             new OpenAIEmbeddings(),
             {
@@ -41,6 +49,7 @@ export async function POST(req: NextRequest) {
         );
 
         const context = relevantDocs
+            .filter((doc) => doc.metadata.fileName === filename)
             .map((doc) => doc.pageContent)
             .join("\n-----\n");
 

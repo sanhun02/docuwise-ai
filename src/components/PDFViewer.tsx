@@ -7,7 +7,7 @@ function PDFViewer({ userId, filename }: Props) {
     const pdfUrl = `/api/download?userId=${userId}&filename=${filename}`;
 
     return (
-        <div className="flex flex-col gap-5 h-full pb-10 px-5 w-1/2 border-r">
+        <div className="flex flex-col gap-5 h-full pb-10 px-5 w-full border-r">
             <p className="font-semibold text-lg w-full overflow-hidden truncate">
                 {filename}
             </p>

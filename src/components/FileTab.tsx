@@ -8,6 +8,7 @@ import QuestionBar from "./QuestionBar";
 import mongoose from "mongoose";
 import { IPDF } from "@/lib/mongo/models";
 import TabCards from "./TabCards";
+import { TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 
 type Props = {
     userId: string | null;
@@ -96,10 +97,22 @@ const FileTab = ({ userId }: Props) => {
                                     userId={userId ? userId : ""}
                                     filename={file.filename}
                                 />
-                                <QuestionBar
-                                    userId={userId ? userId : ""}
-                                    filename={file.filename}
-                                />
+                                <Tabs defaultValue="chat" className="w-full h-full">
+                                    <TabsList>
+                                        <TabsTrigger value="chat">Chat</TabsTrigger>
+                                        <TabsTrigger value="notes">Notes</TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent value="chat" className="h-full">
+                                        <QuestionBar
+                                            userId={userId ? userId : ""}
+                                            filename={file.filename}
+                                        />
+                                    </TabsContent>
+                                    <TabsContent value="notes">
+                                        Notes
+                                    </TabsContent>
+                                </Tabs>
                             </TabsContent>
                         ))}
                 </Tabs>
